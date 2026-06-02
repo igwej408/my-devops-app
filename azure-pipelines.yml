@@ -2,7 +2,7 @@ trigger:
   - main
 
 variables:
-  acrName: 'igwej407acr'
+  acrLoginServer: 'igwej407acr.azurecr.io'
   imageName: 'myapp'
   webAppName: 'igwej407webapp'
   resourceGroup: 'my-devops-rg'
@@ -22,7 +22,7 @@ stages:
       inputs:
         command: buildAndPush
         containerRegistry: 'my-acr-connection'
-        repository: $(imageName)
+        repository: '$(acrLoginServer)/$(imageName)'
         dockerfile: '**/Dockerfile'
         tags: |
           $(Build.BuildId)
@@ -42,4 +42,4 @@ stages:
       inputs:
         azureSubscription: 'my-azure-connection'
         appName: $(webAppName)
-        containers: $(acrName).azurecr.io/$(imageName):$(Build.BuildId)
+        containers: $(acrLoginServer)/$(imageName):$(Build.BuildId)
