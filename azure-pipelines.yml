@@ -5,7 +5,6 @@ variables:
   acrLoginServer: 'igwej407acr.azurecr.io'
   imageName: 'myapp'
   webAppName: 'igwej407webapp'
-  resourceGroup: 'my-devops-rg'
 
 stages:
 
@@ -17,22 +16,21 @@ stages:
       vmImage: 'ubuntu-latest'
     steps:
 
-    - task: Docker@2
+    - script: |
+        echo $(ACR_PASSWORD) | docker login igwej407acr.azurecr.io \
+          --username $(ACR_USERNAME) \
+          --password-stdin
       displayName: 'Login to ACR'
-      inputs:
-        command: login
-        containerRegistry: 'my-acr-connection'
 
-    - task: Docker@2
-      displayName: 'Build and Push to ACR'
-      inputs:
-        command: buildAndPush
-        containerRegistry: 'my-acr-connection'
-        repository: '$(acrLoginServer)/$(imageName)'
-        dockerfile: '**/Dockerfile'
-        tags: |
-          $(Build.BuildId)
-          latest
+    - script: |
+        docker build -t igwej407acr.azurecr.io/myapp:$(Build.BuildId) \
+                     -t igwej407acr.azurecr.io/myapp:latest .
+      displayName: 'Build Docker Image'
+
+    - script: |
+        docker push igwej407acr.azurecr.io/myapp:$(Build.BuildId)
+        docker push igwej407acr.azurecr.io/myapp:latest
+      displayName: 'Push to ACR'
 
 - stage: Deploy
   displayName: 'Deploy to Azure App Service'
@@ -44,7 +42,7 @@ stages:
     steps:
 
     - task: AzureWebAppContainer@1
-      displayName: 'Deploy Container to App Service'
+      displayName: 'Deploy to App Service'
       inputs:
         azureSubscription: 'my-azure-connection'
         appName: $(webAppName)
